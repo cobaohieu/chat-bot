@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Custom Boo Chat bot with GPT3 API Key</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4" style="text-align: center;"><img src="static/boo.png" style="height: 70px;"> s under testing</h1>
+        <div id="chatbox" class="mb-4">
+            <p class="text-secondary">
+                Hi, I'm Boo. How can I assist you today?<br>
+                You could speak by click the Speak green button.
+            </p>
+        </div>
+        <form id="user_input_form" onsubmit="return submitUserInput()">
+            <div class="input-group mb-3">
+                <input type="button" class="btn btn-success" value="Speak" onclick="startSpeechRecognition()">
+                <input type="text" id="user_input" name="user_input" class="form-control" placeholder="or Type your message here..." required>
+                <button type="submit" class="btn btn-primary">Send</button>
+                <button type="button" class="btn btn-danger" onclick="speakLastResponse()">Speak Answer</button>
+            </div>
+        </form>
+
+        <div id="chat" class="mb-4">
+            <!-- Chatbot responses will be displayed here -->
+        </div>
+    </div>
+
+
+    <script>
+        function startSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = function (event) {
+                    const result = event.results[0][0].transcript;
+                    document.getElementsByName('user_input')[0].value = `${result}`;
+                    recognition.stop();
+                }
+
+                recognition.onerror = function (event) {
+                    console.error('Speech recognition error occurred:', event.error);
+                    recognition.stop();
+                }
+
+                recognition.onend = function () {
+                    console.log('Speech recognition has ended.');
+                }
+
+                recognition.start();
+            } else {
+                alert('Speech recognition is not supported in your browser. Please use a modern browser that supports it.');
+            }
+        }
+
+        function appendChatMessage(sender, message) {
+            const chatDiv = document.getElementById('chat');
+            chatDiv.innerHTML += `<div><strong>${sender}: </strong>${message}</div>`;
+            chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to the bottom
+        }
+
+        lastChatbotResponse = '';
+
+        function speakLastResponse() {
+            if (lastChatbotResponse) {
+                speakResponse(lastChatbotResponse);
+            }
+        }
+
+        function speakResponse(response) {
+            const speech = new SpeechSynthesisUtterance(response);
+            speech.rate = 1.0; // You can adjust the speech rate as needed
+            window.speechSynthesis.speak(speech);
+        }
+
+        function saveToHistory(message) {
+            fetch('/save_to_history', {
+                method: 'POST',
+                body: JSON.stringify({ "message": message }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .catch(error => console.error('Error saving to history:', error));
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const user_input = formData.get('user_input');
+            appendChatMessage('You', user_input);
+            form.reset();
+
+            // Save the user input to history.txt
+            saveToHistory(user_input);
+
+            fetch('/get_response', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.text())
+                .then(chatbotResponse => {
+                    appendChatMessage('Chatbot', chatbotResponse);
+                    speakResponse(chatbotResponse);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        document.querySelector('form').addEventListener('submit', submitForm);
+    </script>
+
+
+</body>
+
+</html>

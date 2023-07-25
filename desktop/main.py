@@ -13,32 +13,17 @@ import openai
 import speech_recognition as sr
 
 
-def config(api_key):
-    openai.api_key = api_key
-
-
-def chat_with_gpt3(prompt):
-    response = openai.Completion.create(
-        engine="text-davinci-002",  # Use the appropriate engine for your use case
-        prompt=prompt,
-        max_tokens=150,  # Adjust the response length as needed
-        stop=None  # You can add custom stop words to prevent GPT-3 from continuing indefinitely
-    )
-    return response.choices[0].text.strip()
-
-
-def speech_to_text():
+def recognize_speech():
     recognizer = sr.Recognizer()
 
     with sr.Microphone() as source:
-        print("Listening...")
-        recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
-        audio = recognizer.listen(source)
+        print("Say something!")
+        audio_data = recognizer.listen(source)
 
     try:
-        user_input = recognizer.recognize_google(audio).lower()
-        print("You:", user_input)
-        return user_input
+        text = recognizer.recognize_google(audio_data)
+        print("You:", text)
+        return text
     except sr.UnknownValueError:
         print("Sorry, I didn't catch that.")
         return ""
@@ -47,18 +32,28 @@ def speech_to_text():
         return ""
 
 
+def chat_with_openai(text):
+    openai.api_key = "Your API Key here"
+    messages = [
+        {"role": "user", "content": text},
+    ]
+    
+    chat = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo", messages=messages
+    )
+    reply = chat.choices[0].message['content']
+    return reply
+
+
 def main():
-    config('YOUR_API_KEY')  # Replace 'YOUR_API_KEY' with your actual API key
-    print("Chatbot: Hi, I'm your friendly chatbot. How can I assist you today?")
-    while True:
-        user_input = speech_to_text()
-        if user_input in ["bye", "exit", "quit"]:
-            print("Chatbot: Goodbye! Have a great day!")
-            break
-        prompt = f"You: {user_input}\nChatbot:"
-        response = chat_with_gpt3(prompt)
-        print(response)
+    text = recognize_speech()
+    if text:
+        response = chat_with_openai(text)
+        print("Chatbot:", response)
 
 
 if __name__ == "__main__":
     main()
+
+
+

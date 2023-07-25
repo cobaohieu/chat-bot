@@ -1,4 +1,5 @@
 speechrecognition
-pyaudio
 openai
 Flask
+pyaudio
+pyttsx3
