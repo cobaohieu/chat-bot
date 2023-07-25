@@ -1,5 +1,5 @@
 # chat-bot
-Chat bot include chat GPT
+Boo Chat bot using chat GPT API
 
 
 # For Demo please follow step below
