@@ -87,5 +87,5 @@ def get_response():
 
 
 if __name__ == "__main__":
-    config('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')  # Replace 'YOUR_API_KEY' with your actual API key
+    config('YOUR_API_KEY')  # Replace 'YOUR_API_KEY' with your actual API key
     app.run(host='0.0.0.0', port=88888, debug=True)  # Run the Flask app in debug mode for development purposes
